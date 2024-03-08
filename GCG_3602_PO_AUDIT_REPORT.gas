@@ -1,0 +1,201 @@
+Program.Sub.ScreenSU.Start
+Program.Sub.ScreenSU.End
+
+Program.Sub.Preflight.Start
+
+Variable.UDT.uSerial.Define("Line",String,LINE)
+Variable.UDT.uSerial.Define("Serial",String,SERIAL)
+Variable.uGlobal.uSerial.Declare("uSerial")
+Variable.UDT.uBegin.Define("Serial",String,SERIAL)
+Variable.uGlobal.uBegin.Declare("uBegin")
+Variable.Global.sBreakRcvr.Declare(String)
+Variable.Global.sPrtDesc.Declare(String)
+Variable.Global.sProgram.Declare(String)
+Program.Sub.Preflight.End
+
+Program.Sub.Main.Start
+'ERM
+'Quote 3456
+'Hook 39402
+
+
+F.Intrinsic.Control.If(V.Caller.Hook,=,39406)
+	V.Passed.777777.Set(1)
+	V.Global.sPrtDesc.Set(V.Passed.000001)
+	V.Global.sProgram.Set(V.Passed.000007)
+	V.Global.sBreakRcvr.Set(V.Passed.000002)
+	F.Intrinsic.Control.CallSub(Load)
+F.Intrinsic.Control.EndIf
+F.Intrinsic.Control.End
+
+Program.Sub.Main.End
+
+Program.Sub.Load.Start
+V.Local.sSQL.Declare(String)
+V.Local.i.Declare(Long)
+V.Local.sStartSerial.Declare(String)
+V.Local.sEndSerial.Declare(String)
+V.Local.sParam.Declare(String)
+V.Local.sParamVal.Declare(String)
+V.Local.sReportName.Declare(String)
+V.Local.iReport.Declare(Long)
+
+F.ODBC.Connection!con.OpenConnection(V.Ambient.PDSN,V.Ambient.PUser,V.Ambient.PPass)
+
+F.Intrinsic.String.Concat("Delete From GCG_PO_AUDIT where TRMNL = '",V.Caller.Terminal,"'",V.Local.sSQL)
+'F.Intrinsic.String.Concat("Delete From GCG_PO_AUDIT where TRMNL = '",025,"'",V.Local.sSQL)
+F.ODBC.Connection!con.Execute(V.Local.sSQL)
+
+F.Intrinsic.String.Concat(" Select * From BI_PO_AUDIT where Trmnl  = '",V.Caller.Terminal,"' Order by LINE",V.Local.sSQL)
+'F.Intrinsic.String.Concat(" Select * From BI_PO_AUDIT where Trmnl  = '",025,"' Order by LINE",V.Local.sSQL)
+F.ODBC.Connection!con.OpenRecordsetRO("rst",V.Local.sSQL)
+F.Intrinsic.Control.If(V.ODBC.con!rst.EOF,=,False)
+	F.Intrinsic.Variable.LoadUDTFromRecordset("con","rst","V.uGlobal.uSerial",False)
+	F.Intrinsic.Variable.UDTMultiFlagDuplicates(V.uGlobal.uSerial!Line,V.uGlobal.uSerial!Line)
+	F.Intrinsic.Variable.UDTDeleteFlagged(V.uGlobal.uSerial)
+F.Intrinsic.Control.EndIf
+F.ODBC.con!rst.Close
+
+F.Intrinsic.Control.For(V.Local.i,V.uGlobal.uSerial.LBound,V.uGlobal.uSerial.UBound,1)
+	F.Intrinsic.String.Concat("Select * From BI_PO_AUDIT where Trmnl  = '",V.Caller.Terminal,"' and LINE = '",V.uGlobal.uSerial(v.Local.i)!Line,"' and SERIAL = '",V.uGlobal.uSerial(v.Local.i)!Serial,"' Order by PO, LINE, SEQ",V.Local.sSQL)
+	'F.Intrinsic.String.Concat("Select * From BI_PO_AUDIT where Trmnl  = '",025,"' and LINE = '",V.uGlobal.uSerial(v.Local.i)!Line,"' and SERIAL = '",V.uGlobal.uSerial(v.Local.i)!Serial,"' Order by PO, LINE, SEQ",V.Local.sSQL)
+	F.ODBC.Connection!con.OpenRecordsetRO("rst",V.Local.sSQL)
+	F.Intrinsic.Control.If(V.ODBC.con!rst.EOF,=,False)
+		F.Intrinsic.Control.DoUntil(V.ODBC.con!rst.EOF,=,True)
+			F.Intrinsic.String.Concat("Select * From GCG_PO_AUDIT where TRMNL = '",V.Caller.Terminal,"'",V.Local.sSQL)
+			'F.Intrinsic.String.Concat("Select * From GCG_PO_AUDIT where TRMNL = '",025,"'",V.Local.sSQL)
+			F.ODBC.Connection!con.OpenRecordsetRW("rstA",V.Local.sSQL)
+			F.Intrinsic.Control.If(V.ODBC.con!rstA.EOF,=,False)
+				F.ODBC.con!rstA.AddNew
+				F.ODBC.con!rstA.Set!TRMNL(V.ODBC.con!rst.FieldValTrim!TRMNL)
+				F.ODBC.con!rstA.Set!PO(V.ODBC.con!rst.FieldValTrim!PO)
+				F.ODBC.con!rstA.Set!LINE(V.ODBC.con!rst.FieldValTrim!LINE)
+				F.ODBC.con!rstA.Set!SEQ(V.ODBC.con!rst.FieldValTrim!SEQ)
+				F.ODBC.con!rstA.Set!PART(V.ODBC.con!rst.FieldValTrim!PART)
+				F.ODBC.con!rstA.Set!LOCN(V.ODBC.con!rst.FieldValTrim!LOCN)
+				F.ODBC.con!rstA.Set!ORD_DATE(V.ODBC.con!rst.FieldValTrim!ORD_DATE)
+				F.ODBC.con!rstA.Set!BIN(V.ODBC.con!rst.FieldValTrim!BIN)
+				F.ODBC.con!rstA.Set!LINE_TYPE(V.ODBC.con!rst.FieldValTrim!LINE_TYPE)
+				F.ODBC.con!rstA.Set!PO_QTY_REC(V.ODBC.con!rst.FieldValTrim!PO_QTY_REC)
+				F.ODBC.con!rstA.Set!INV_QTY_REC(V.ODBC.con!rst.FieldValTrim!INV_QTY_REC)
+				F.ODBC.con!rstA.Set!COST(V.ODBC.con!rst.FieldValTrim!COST)
+				F.ODBC.con!rstA.Set!CLOSE_PO(V.ODBC.con!rst.FieldValTrim!CLOSE_PO)
+				F.ODBC.con!rstA.Set!ACCOUNT(V.ODBC.con!rst.FieldValTrim!ACCOUNT)
+				F.ODBC.con!rstA.Set!RECEIVED_NO(V.ODBC.con!rst.FieldValTrim!RECEIVED_NO)
+				F.ODBC.con!rstA.Set!RECEIVED_DATE(V.ODBC.con!rst.FieldValTrim!RECEIVED_DATE)
+				F.ODBC.con!rstA.Set!RECEIVED_TIME(V.ODBC.con!rst.FieldValTrim!RECEIVED_TIME)
+				F.ODBC.con!rstA.Set!WO(V.ODBC.con!rst.FieldValTrim!WO)
+				F.ODBC.con!rstA.Set!WO_SUFFIX(V.ODBC.con!rst.FieldValTrim!WO_SUFFIX)
+				F.ODBC.con!rstA.Set!WO_SEQ(V.ODBC.con!rst.FieldValTrim!WO_SEQ)
+				F.ODBC.con!rstA.Set!DESCR(V.ODBC.con!rst.FieldValTrim!DESCR)
+				F.ODBC.con!rstA.Set!VENDOR_NAME(V.ODBC.con!rst.FieldValTrim!VENDOR_NAME)
+				F.ODBC.con!rstA.Set!PROD_LINE(V.ODBC.con!rst.FieldValTrim!PROD_LINE)
+				F.ODBC.con!rstA.Set!TRAN_CODE(V.ODBC.con!rst.FieldValTrim!TRAN_CODE)
+				F.ODBC.con!rstA.Set!FRT_TAX(V.ODBC.con!rst.FieldValTrim!FRT_TAX)
+				F.ODBC.con!rstA.Set!OTHER(V.ODBC.con!rst.FieldValTrim!OTHER)
+				F.ODBC.con!rstA.Set!CONVERSION(V.ODBC.con!rst.FieldValTrim!CONVERSION)
+				F.ODBC.con!rstA.Set!LOT(V.ODBC.con!rst.FieldValTrim!LOT)
+				F.ODBC.con!rstA.Set!HEAT(V.ODBC.con!rst.FieldValTrim!HEAT)
+				F.ODBC.con!rstA.Set!SERIAL(V.ODBC.con!rst.FieldValTrim!SERIAL)
+				F.ODBC.con!rstA.Set!LOT_DESC(V.ODBC.con!rst.FieldValTrim!LOT_DESC)
+				F.ODBC.con!rstA.Set!LINE_QTY(V.ODBC.con!rst.FieldValTrim!LINE_QTY)
+				F.ODBC.con!rstA.Set!INV_MESSAGE(V.ODBC.con!rst.FieldValTrim!INV_MESSAGE)
+				F.ODBC.con!rstA.Set!PUR_MESSAGE(V.ODBC.con!rst.FieldValTrim!PUR_MESSAGE)
+				F.ODBC.con!rstA.Set!TC3(V.ODBC.con!rst.FieldValTrim!TC3)
+				F.ODBC.con!rstA.Set!OTHER3(V.ODBC.con!rst.FieldValTrim!OTHER3)
+				F.ODBC.con!rstA.Set!TEXT(V.ODBC.con!rst.FieldValTrim!TEXT)
+				F.ODBC.con!rstA.Set!DROP_FLAG(V.ODBC.con!rst.FieldValTrim!DROP_FLAG)
+				F.ODBC.con!rstA.Set!PURCH_COST(V.ODBC.con!rst.FieldValTrim!PURCH_COST)
+				F.ODBC.con!rstA.Set!PO_SUFFIX(V.ODBC.con!rst.FieldValTrim!PO_SUFFIX)
+				F.ODBC.con!rstA.Set!START_SERIAL(V.ODBC.con!rst.FieldValTrim!SERIAL)
+			F.Intrinsic.Control.Else
+				F.ODBC.con!rstA.AddNew
+				F.ODBC.con!rstA.Set!TRMNL(V.ODBC.con!rst.FieldValTrim!TRMNL)
+				F.ODBC.con!rstA.Set!PO(V.ODBC.con!rst.FieldValTrim!PO)
+				F.ODBC.con!rstA.Set!LINE(V.ODBC.con!rst.FieldValTrim!LINE)
+				F.ODBC.con!rstA.Set!SEQ(V.ODBC.con!rst.FieldValTrim!SEQ)
+				F.ODBC.con!rstA.Set!PART(V.ODBC.con!rst.FieldValTrim!PART)
+				F.ODBC.con!rstA.Set!LOCN(V.ODBC.con!rst.FieldValTrim!LOCN)
+				F.ODBC.con!rstA.Set!ORD_DATE(V.ODBC.con!rst.FieldValTrim!ORD_DATE)
+				F.ODBC.con!rstA.Set!BIN(V.ODBC.con!rst.FieldValTrim!BIN)
+				F.ODBC.con!rstA.Set!LINE_TYPE(V.ODBC.con!rst.FieldValTrim!LINE_TYPE)
+				F.ODBC.con!rstA.Set!PO_QTY_REC(V.ODBC.con!rst.FieldValTrim!PO_QTY_REC)
+				F.ODBC.con!rstA.Set!INV_QTY_REC(V.ODBC.con!rst.FieldValTrim!INV_QTY_REC)
+				F.ODBC.con!rstA.Set!COST(V.ODBC.con!rst.FieldValTrim!COST)
+				F.ODBC.con!rstA.Set!CLOSE_PO(V.ODBC.con!rst.FieldValTrim!CLOSE_PO)
+				F.ODBC.con!rstA.Set!ACCOUNT(V.ODBC.con!rst.FieldValTrim!ACCOUNT)
+				F.ODBC.con!rstA.Set!RECEIVED_NO(V.ODBC.con!rst.FieldValTrim!RECEIVED_NO)
+				F.ODBC.con!rstA.Set!RECEIVED_DATE(V.ODBC.con!rst.FieldValTrim!RECEIVED_DATE)
+				F.ODBC.con!rstA.Set!RECEIVED_TIME(V.ODBC.con!rst.FieldValTrim!RECEIVED_TIME)
+				F.ODBC.con!rstA.Set!WO(V.ODBC.con!rst.FieldValTrim!WO)
+				F.ODBC.con!rstA.Set!WO_SUFFIX(V.ODBC.con!rst.FieldValTrim!WO_SUFFIX)
+				F.ODBC.con!rstA.Set!WO_SEQ(V.ODBC.con!rst.FieldValTrim!WO_SEQ)
+				F.ODBC.con!rstA.Set!DESCR(V.ODBC.con!rst.FieldValTrim!DESCR)
+				F.ODBC.con!rstA.Set!VENDOR_NAME(V.ODBC.con!rst.FieldValTrim!VENDOR_NAME)
+				F.ODBC.con!rstA.Set!PROD_LINE(V.ODBC.con!rst.FieldValTrim!PROD_LINE)
+				F.ODBC.con!rstA.Set!TRAN_CODE(V.ODBC.con!rst.FieldValTrim!TRAN_CODE)
+				F.ODBC.con!rstA.Set!FRT_TAX(V.ODBC.con!rst.FieldValTrim!FRT_TAX)
+				F.ODBC.con!rstA.Set!OTHER(V.ODBC.con!rst.FieldValTrim!OTHER)
+				F.ODBC.con!rstA.Set!CONVERSION(V.ODBC.con!rst.FieldValTrim!CONVERSION)
+				F.ODBC.con!rstA.Set!LOT(V.ODBC.con!rst.FieldValTrim!LOT)
+				F.ODBC.con!rstA.Set!HEAT(V.ODBC.con!rst.FieldValTrim!HEAT)
+				F.ODBC.con!rstA.Set!SERIAL(V.ODBC.con!rst.FieldValTrim!SERIAL)
+				F.ODBC.con!rstA.Set!LOT_DESC(V.ODBC.con!rst.FieldValTrim!LOT_DESC)
+				F.ODBC.con!rstA.Set!LINE_QTY(V.ODBC.con!rst.FieldValTrim!LINE_QTY)
+				F.ODBC.con!rstA.Set!INV_MESSAGE(V.ODBC.con!rst.FieldValTrim!INV_MESSAGE)
+				F.ODBC.con!rstA.Set!PUR_MESSAGE(V.ODBC.con!rst.FieldValTrim!PUR_MESSAGE)
+				F.ODBC.con!rstA.Set!TC3(V.ODBC.con!rst.FieldValTrim!TC3)
+				F.ODBC.con!rstA.Set!OTHER3(V.ODBC.con!rst.FieldValTrim!OTHER3)
+				F.ODBC.con!rstA.Set!TEXT(V.ODBC.con!rst.FieldValTrim!TEXT)
+				F.ODBC.con!rstA.Set!DROP_FLAG(V.ODBC.con!rst.FieldValTrim!DROP_FLAG)
+				F.ODBC.con!rstA.Set!PURCH_COST(V.ODBC.con!rst.FieldValTrim!PURCH_COST)
+				F.ODBC.con!rstA.Set!PO_SUFFIX(V.ODBC.con!rst.FieldValTrim!PO_SUFFIX)
+				F.ODBC.con!rstA.Set!START_SERIAL(V.ODBC.con!rst.FieldValTrim!SERIAL)
+			F.Intrinsic.Control.EndIf
+			F.ODBC.con!rstA.Update
+			F.ODBC.con!rstA.Close
+			F.ODBC.con!rst.MoveNext
+		F.Intrinsic.Control.Loop
+	F.Intrinsic.Control.EndIf
+	F.ODBC.con!rst.Close
+F.Intrinsic.Control.Next(V.Local.i)
+
+F.Intrinsic.Control.For(V.Local.i,V.uGlobal.uSerial.LBound,V.uGlobal.uSerial.UBound,1)
+	F.Intrinsic.String.Concat("Select SERIAL From BI_PO_AUDIT where Trmnl  = '",V.Caller.Terminal,"' and LINE = '",V.uGlobal.uSerial(v.Local.i)!Line,"' Order by LINE desc",V.Local.sSQL)
+	'F.Intrinsic.String.Concat("Select SERIAL From BI_PO_AUDIT where Trmnl  = '",025,"' and LINE = '",V.uGlobal.uSerial(v.Local.i)!Line,"' Order by LINE desc",V.Local.sSQL)
+	F.ODBC.Connection!con.OpenRecordsetRO("rst",V.Local.sSQL)
+	F.Intrinsic.Control.If(V.ODBC.con!rst.EOF,=,False)
+		F.Intrinsic.Variable.LoadUDTFromRecordset("con","rst","V.uGlobal.uBegin",True)
+		F.Intrinsic.Variable.UDTMultiQuickSort(V.uGlobal.uBegin!Serial,True)
+		'F.Intrinsic.String.Concat("Select * From GCG_PO_AUDIT where TRMNL = '",025,"' and LINE = '",V.uGlobal.uSerial(v.Local.i)!Line,"'",V.Local.sSQL)
+		F.Intrinsic.String.Concat("Select * From GCG_PO_AUDIT where TRMNL = '",V.Caller.Terminal,"' and LINE = '",V.uGlobal.uSerial(v.Local.i)!Line,"'",V.Local.sSQL)
+		F.ODBC.Connection!con.OpenRecordsetRW("rstA",V.Local.sSQL)
+			F.Intrinsic.Control.If(V.ODBC.con!rstA.EOF,=,False)
+				F.Intrinsic.Control.DoUntil(V.ODBC.con!rstA.EOF,=,True)
+					F.ODBC.con!rstA.Set!END_SERIAL(V.uGlobal.uBegin(0)!Serial)
+					F.ODBC.con!rstA.Update
+					F.ODBC.con!rstA.MoveNext
+				F.Intrinsic.Control.Loop
+			F.Intrinsic.Control.EndIf
+			F.ODBC.con!rstA.Close
+	F.Intrinsic.Control.EndIf
+	F.ODBC.con!rst.Close
+F.Intrinsic.Control.Next(V.Local.i)
+
+
+V.Local.sParam.Set("Terminal*!*BreakRcvr*!*PrtDesc*!*Program")
+F.Intrinsic.String.Concat(V.Caller.Terminal,"*!*",V.Global.sBreakRcvr,"*!*",V.Global.sPrtDesc,"*!*",V.Global.sProgram,V.Local.sParamVal)
+F.Intrinsic.String.Split(V.Local.sParam,"*!*",V.Local.sParam)
+F.Intrinsic.String.Split(V.Local.sParamVal,"*!*",V.Local.sParamVal)
+'F.Intrinsic.String.Concat(V.Caller.BusintDir,"\CUSTOM\SF_MatPickList_WIM.rpt",V.Local.sReportName)
+'F.Global.BI.InitializeReport("",V.Local.sReportName,V.Local.iReport)
+F.Global.BI.GetIDFromName("PU_AUDIT_ECP.rpt",V.Local.iReport)
+F.Global.BI.PrintReport(V.Local.iReport,0,V.Local.sParam,V.Local.sParamVal,"",False)
+
+
+Program.Sub.Load.End
+
+Program.Sub.Comments.Start
+${$0$}$GCG_PO_AUDIT_REPORT$}$ERIC$}$4/5/2012
+Program.Sub.Comments.End
+
